@@ -1,4 +1,4 @@
 {
 	"replace": false,
-	"values": ["pvzpawners:weed_spawner"]
+	"values": ["pvzpawners:weed_spawner", "pvzpawners:dandelion_weed_spawner"]
 }

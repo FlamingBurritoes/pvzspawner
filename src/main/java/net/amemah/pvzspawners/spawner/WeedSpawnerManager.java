@@ -1,6 +1,5 @@
 package net.amemah.pvzspawners.spawner;
 
-import net.amemah.pvzspawners.block.ModBlocks;
 import net.amemah.pvzspawners.config.WeedSpawnerConfig;
 import net.amemah.pvzspawners.mixin.WeedVariantAccessor;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
@@ -12,9 +11,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.phys.Vec3;
-import zombieman.pea_extension.PeaExtensionEntities;
 import zombieman.pea_extension.entity.GWPlant;
 import zombieman.pea_extension.entity.Weed;
 
@@ -30,7 +27,7 @@ public final class WeedSpawnerManager {
 
 	/** Called before normal taming grants ownership; UUID ownership, not nearby distance, determines scope. */
 	public static boolean despawnForTaming(Entity entity) {
-		if (!(entity instanceof Weed weed) || weed.isRemoved() || !(weed.level() instanceof ServerLevel level)) {
+		if (!(entity instanceof GWPlant weed) || weed.isRemoved() || !(weed.level() instanceof ServerLevel level)) {
 			return false;
 		}
 		WeedSpawnerData data = WeedSpawnerData.get(level);
@@ -45,7 +42,7 @@ public final class WeedSpawnerManager {
 
 	/** Stop physics/AI/knockback from walking across the boundary, rather than relying only on recall. */
 	public static Vec3 limitMovement(Entity entity, Vec3 movement) {
-		if (!(entity instanceof Weed) || !entity.entityTags().contains(WeedSpawnerData.MANAGED_TAG)
+		if (!(entity instanceof GWPlant) || !entity.entityTags().contains(WeedSpawnerData.MANAGED_TAG)
 			|| !(entity.level() instanceof ServerLevel level)) {
 			return movement;
 		}
@@ -54,7 +51,7 @@ public final class WeedSpawnerManager {
 			return movement;
 		}
 		BlockPos origin = owner.spawner().pos();
-		int radius = WeedSpawnerConfig.get().roamRadius();
+		int radius = owner.spawner().kind().settings().roamRadius();
 		Vec3 next = entity.position().add(movement);
 		double x = movement.x;
 		double z = movement.z;
@@ -69,18 +66,18 @@ public final class WeedSpawnerManager {
 	public static void initialize() {
 		ServerLifecycleEvents.SERVER_STARTING.register(server -> WeedSpawnerConfig.load());
 		ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> {
-			if (entity instanceof Weed && entity.level() instanceof ServerLevel level) {
+			if (entity instanceof GWPlant && entity.level() instanceof ServerLevel level) {
 				WeedSpawnerData.get(level).recordDeath(entity.getUUID(), level.getGameTime());
 			}
 		});
 		ServerEntityEvents.ENTITY_UNLOAD.register((entity, level) -> {
 			// Chunk unloading and server shutdown do NOT free the slot. A real discard does.
-			if (entity instanceof Weed && entity.getRemovalReason() != null && entity.getRemovalReason().shouldDestroy()) {
+			if (entity instanceof GWPlant && entity.getRemovalReason() != null && entity.getRemovalReason().shouldDestroy()) {
 				WeedSpawnerData.get(level).recordDeath(entity.getUUID(), level.getGameTime());
 			}
 		});
 		ServerEntityEvents.ENTITY_LOAD.register((entity, level) -> {
-			if (entity instanceof Weed weed) {
+			if (entity instanceof GWPlant weed) {
 				WeedSpawnerData data = WeedSpawnerData.get(level);
 				if (data.consumePendingDeath(weed.getUUID())) {
 					weed.kill(level);
@@ -101,12 +98,12 @@ public final class WeedSpawnerManager {
 		// This pass also runs when the source block's chunk is not ticking.
 		for (Map.Entry<UUID, WeedSpawnerData.Ownership> entry : data.ownership().entrySet()) {
 			Entity entity = level.getEntity(entry.getKey());
-			if (entity instanceof Weed weed && weed.isAlive()) {
+			if (entity instanceof GWPlant weed && weed.isAlive()) {
 				if (weed.isTame()) {
 					// Fallback for old saves or mods/commands that set the tame flag without calling tame().
 					despawnForTaming(weed);
 				} else {
-					confine(level, data, entry.getValue().spawner().pos(), weed);
+					confine(level, data, entry.getValue().spawner(), weed);
 				}
 			}
 		}
@@ -117,7 +114,7 @@ public final class WeedSpawnerManager {
 			if (!level.hasChunkAt(spawner.pos())) {
 				continue;
 			}
-			if (!level.getBlockState(spawner.pos()).is(ModBlocks.WEED_SPAWNER)) {
+			if (!spawner.kind().matches(level.getBlockState(spawner.pos()))) {
 				data.unregister(level, spawner.pos());
 				continue;
 			}
@@ -134,21 +131,23 @@ public final class WeedSpawnerManager {
 	}
 
 	private static void spawn(ServerLevel level, WeedSpawnerData data, WeedSpawnerData.Spawner spawner, SpawnSlot slot) {
-		Weed weed = PeaExtensionEntities.WEED.create(level, EntitySpawnReason.SPAWNER);
+		GWPlant weed = spawner.kind().create(level);
 		if (weed == null) {
 			return;
 		}
-		Weed.Variant variant = VARIANTS[level.getRandom().nextInt(VARIANTS.length)];
-		weed.getEntityData().set(WeedVariantAccessor.pvzpawners$variant(), (byte) variant.getId());
-		weed.getEntityData().set(WeedVariantAccessor.pvzpawners$shieldPool(), variant.getShieldPool());
-		Vec3 location = findSafePosition(level, spawner.pos(), weed, WeedSpawnerConfig.get().spawnRadius());
+		if (weed instanceof Weed normalWeed) {
+			Weed.Variant variant = VARIANTS[level.getRandom().nextInt(VARIANTS.length)];
+			normalWeed.getEntityData().set(WeedVariantAccessor.pvzpawners$variant(), (byte) variant.getId());
+			normalWeed.getEntityData().set(WeedVariantAccessor.pvzpawners$shieldPool(), variant.getShieldPool());
+		}
+		Vec3 location = findSafePosition(level, spawner.pos(), weed, spawner.kind().settings().spawnRadius());
 		if (location == null) {
 			return; // Keep this slot empty; retry later without shortening a death cooldown.
 		}
 		// Do not call Weed.finalizeSpawn: it has a wild-group hook that can spawn untracked extras.
 		weed.snapTo(location, level.getRandom().nextFloat() * 360, 0);
 		weed.setPersistenceRequired();
-		weed.setHomeTo(spawner.pos(), WeedSpawnerConfig.get().roamRadius());
+		weed.setHomeTo(spawner.pos(), spawner.kind().settings().roamRadius());
 		weed.setCommand(GWPlant.Command.WANDER);
 		if (level.addFreshEntity(weed)) {
 			data.occupy(spawner, slot, weed.getUUID());
@@ -160,8 +159,9 @@ public final class WeedSpawnerManager {
 		}
 	}
 
-	private static void confine(ServerLevel level, WeedSpawnerData data, BlockPos origin, Weed weed) {
-		int radius = WeedSpawnerConfig.get().roamRadius();
+	private static void confine(ServerLevel level, WeedSpawnerData data, WeedSpawnerData.Spawner spawner, GWPlant weed) {
+		BlockPos origin = spawner.pos();
+		int radius = spawner.kind().settings().roamRadius();
 		weed.setHomeTo(origin, radius);
 		if (weed.getTarget() != null && !inside(origin, weed.getTarget().position(), radius)) {
 			weed.setTarget(null);
@@ -191,7 +191,7 @@ public final class WeedSpawnerManager {
 			&& Math.abs(position.y - origin.getY()) <= radius;
 	}
 
-	private static Vec3 findSafePosition(ServerLevel level, BlockPos origin, Weed weed, int radius) {
+	private static Vec3 findSafePosition(ServerLevel level, BlockPos origin, GWPlant weed, int radius) {
 		for (int attempt = 0; attempt < SPAWN_ATTEMPTS; attempt++) {
 			int dx = level.getRandom().nextInt(radius * 2 + 1) - radius;
 			int dz = level.getRandom().nextInt(radius * 2 + 1) - radius;
@@ -209,7 +209,7 @@ public final class WeedSpawnerManager {
 		return null;
 	}
 
-	private static boolean isSafe(ServerLevel level, Weed weed, Vec3 location) {
+	private static boolean isSafe(ServerLevel level, GWPlant weed, Vec3 location) {
 		BlockPos feet = BlockPos.containing(location);
 		if (!level.hasChunkAt(feet) || !level.hasChunkAt(feet.above()) || !level.getWorldBorder().isWithinBounds(feet)) {
 			return false;

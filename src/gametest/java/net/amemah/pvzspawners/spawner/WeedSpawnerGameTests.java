@@ -228,8 +228,11 @@ public class WeedSpawnerGameTests {
 		original.occupy(spawner, spawner.slots().get(1), dead);
 		original.recordDeath(dead, 500);
 		var encoded = WeedSpawnerData.CODEC.encodeStart(NbtOps.INSTANCE, original).getOrThrow();
+		// Simulate a pre-dandelion save: these entries did not include a source kind.
+		encoded.asCompound().orElseThrow().getListOrEmpty("spawners").getCompoundOrEmpty(0).remove("kind");
 		WeedSpawnerData restored = WeedSpawnerData.CODEC.parse(NbtOps.INSTANCE, encoded).getOrThrow();
 		helper.assertTrue(restored.find(living) != null, "Unloaded living entity lost its slot during save/load");
+		helper.assertTrue(restored.find(living).spawner().kind() == SpawnerKind.WEED, "Old saves must remain regular Weed sources");
 		helper.assertTrue(restored.find(dead) == null, "Dead entity retained ownership during save/load");
 		var restoredSlots = restored.spawners().getFirst().slots();
 		helper.assertTrue(!restoredSlots.get(0).isReady(100000), "Unloaded entity was treated as dead");

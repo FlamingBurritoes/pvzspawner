@@ -2,6 +2,7 @@ package net.amemah.pvzspawners.block;
 
 import com.mojang.serialization.MapCodec;
 import net.amemah.pvzspawners.spawner.WeedSpawnerData;
+import net.amemah.pvzspawners.spawner.SpawnerKind;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.BlockGetter;
@@ -38,7 +39,7 @@ public final class WeedSpawnerBlock extends Block {
 	protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
 		super.onPlace(state, level, pos, oldState, movedByPiston);
 		if (level instanceof ServerLevel serverLevel && !oldState.is(this)) {
-			WeedSpawnerData.get(serverLevel).register(pos);
+			WeedSpawnerData.get(serverLevel).register(pos, SpawnerKind.forBlock(state));
 		}
 	}
 

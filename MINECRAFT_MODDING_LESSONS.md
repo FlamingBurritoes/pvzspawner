@@ -21,6 +21,7 @@ This is a portable learning document for future Minecraft projects, not a specif
 ## Keep persistent ownership separate from proximity
 
 - A nearby-entity count is not ownership. Overlapping spawners must track their own UUIDs.
+- When adding a second spawner type, centralize shared lifecycle rules and persist the source kind alongside UUID ownership. Select cooldowns, caps and radii from that kind, including death events while the source is unloaded. Provide backward-compatible defaults for old saves and avoid replacing existing users' configuration.
 - An unloaded entity is not dead. Do not refill a slot merely because a UUID cannot be found in loaded chunks.
 - Persist ownership and respawn deadlines. Listen for confirmed deaths even when the owning block's chunk is unloaded.
 - Decide whether cooldowns use world ticks or real time, whether initial slots fill immediately, and what happens when a source block is broken.

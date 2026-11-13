@@ -5,7 +5,10 @@
 	"name": "Weed Spawner game tests",
 	"environment": "server",
 	"entrypoints": {
-		"fabric-gametest": ["net.amemah.pvzspawners.spawner.WeedSpawnerGameTests"]
+		"fabric-gametest": [
+			"net.amemah.pvzspawners.spawner.WeedSpawnerGameTests",
+			"net.amemah.pvzspawners.spawner.DandelionSpawnerGameTests"
+		]
 	},
 	"depends": {
 		"pvzpawners": "*",

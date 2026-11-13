@@ -15,7 +15,20 @@ This is the project-specific inventory for `pvzpawners`. The Java package is `ne
 | `src/main/resources/pvzpawners.mixins.json` | Lists bytecode hooks used by the mod. |
 | `README.md` | Dependency installation and project overview. |
 
-## Weed Spawner
+## Dandelion Weed Spawner addition
+
+- ID: `pvzpawners:dandelion_weed_spawner`; entity: `pea_extension:dandelion_weed`; seed packet: `pea_extension:dandelion_weed_packet`.
+- Defaults: two living entities, 20-second replacement cooldown, 3-block spawn radius, 6-block roam radius. Independent settings use `config/pvzpawners-dandelion.json`, with the same validated field names as the regular config (`maxWeeds` is the entity cap for that file).
+- Shares dirt-like mining, half-slab collision, smoke/spawn effect, normal death when its source is destroyed, anti-taming death/cooldown, unloaded-entity ownership and pending-death persistence. No normal Weed variant accessor is applied to Dandelion Weeds.
+- `spawner/SpawnerKind.java` contains per-source entity/settings differences. The existing block class, manager and SavedData now share behavior for both kinds instead of maintaining divergent copies. SavedData writes the source kind; old records without it remain regular Weed sources. Existing regular config is not replaced or migrated.
+- Registered both block/item pairs in `block/ModBlocks.java`; both appear in Functional Blocks. The shovel tag and English translations include the new block.
+- Added `assets/pvzpawners/blockstates/dandelion_weed_spawner.json`, `assets/pvzpawners/models/item/dandelion_weed_spawner.json`, `assets/pvzpawners/items/dandelion_weed_spawner.json`, `data/pvzpawners/recipe/dandelion_weed_spawner.json` and `data/pvzpawners/loot_table/blocks/dandelion_weed_spawner.json` under `src/main/resources/`.
+- Uses the user's existing `models/block/dandelion_weed_spawner.json` and `textures/block/dandelion_weed_spawner_top.png` under `assets/pvzpawners/`. Only texture resource identifiers were corrected; geometry, UVs and PNG art were preserved. The item GUI rotates 90 degrees to show the top, like the regular spawner.
+- Recipe: `WWW / WDW / DDD`, consuming five Dandelion Weed Seed Packets and four Dirt to produce one Dandelion Weed Spawner.
+- `src/gametest/java/net/amemah/pvzspawners/spawner/DandelionSpawnerGameTests.java` checks the entity type/cap, 400-tick cooldown and replacement, range enforcement, anti-taming/source-break deaths, saved source kind, recipe/output, mining/drop behavior, and mixed source limits/cooldowns.
+- Verification: Gradle `build` passed with all **14 server GameTests** (13 addon tests plus Fabric's test), including all existing regular Weed tests. Confirmed the generated dandelion config has 20/3/6/2 defaults and the release JAR contains its model, PNG, item definition, blockstate, recipe and loot table. Existing save records without a kind field are explicitly tested as regular Weed sources. Client rendering remains a manual check.
+
+## Regular Weed Spawner file inventory
 
 ### Java files created
 
@@ -118,7 +131,7 @@ Manual follow-up checklist: inspect the Creative item and model in a client; rep
 
 - Gradle `build`: **passed**, including the requested crafting recipe.
 - **11 JUnit tests passed** (timer/ownership state, circular range checks and config validation).
-- **10 addon GameTests passed** in a real headless Minecraft server: the exact crafting pattern/output, variant field access, three initial weeds plus death cooldown/respawn, independent cleanup of overlapping sources, confinement/source-destruction death with a retained dying entity, ownership/deadline NBT round-trip, persisted pending death on entity load, dirt-like mining/drops, immediate death/cooldown on taming while natural weeds remain tamable, and the direct tame-flag fallback. The runner reported **11 passed** including Fabric's own test.
+- **13 addon GameTests passed** in a real headless Minecraft server: the original ten tests cover the regular Weed behavior, recipe, mining, ownership, deaths and anti-taming. Three additional dandelion tests cover its recipe/mining, two-entity limit and 20-second respawn, shared protections, saved kind and mixed-source isolation. The runner reported **14 passed** including Fabric's own test.
 - Checked `build/libs/pvzpawners-1.0.0.jar`: block assets and classes are included; test classes are not.
 - The release JAR contains the new shovel tag and no old pickaxe tag. Custom model geometry, UVs and PNG art were preserved; only the invalid vanilla texture identifiers were repaired. Both referenced vanilla PNG paths were confirmed present in Minecraft's JAR.
 - Client rendering (including smoke/death appearance), a complete world restart/chunk-unload cycle, and actual seed-packet taming interactions remain manual checks. The cleanup test uses a real tamed-state weed and the actual entity-load callback; it does not simulate a complete chunk save/reload. Upstream mods emitted their own existing mixin/loot/resource warnings during the server tests; those were not changed by this addon.

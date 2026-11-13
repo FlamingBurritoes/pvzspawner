@@ -22,12 +22,23 @@ public final class ModBlocks {
 		Pvzpawners.id("weed_spawner"), new BlockItem(WEED_SPAWNER, new Item.Properties()
 			.setId(ResourceKey.create(Registries.ITEM, Pvzpawners.id("weed_spawner")))
 			.useBlockDescriptionPrefix()));
+	public static final Block DANDELION_WEED_SPAWNER = Registry.register(BuiltInRegistries.BLOCK,
+		Pvzpawners.id("dandelion_weed_spawner"), new WeedSpawnerBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.DIRT)
+			.setId(ResourceKey.create(Registries.BLOCK, Pvzpawners.id("dandelion_weed_spawner")))
+			.noOcclusion()));
+	public static final Item DANDELION_WEED_SPAWNER_ITEM = Registry.register(BuiltInRegistries.ITEM,
+		Pvzpawners.id("dandelion_weed_spawner"), new BlockItem(DANDELION_WEED_SPAWNER, new Item.Properties()
+			.setId(ResourceKey.create(Registries.ITEM, Pvzpawners.id("dandelion_weed_spawner")))
+			.useBlockDescriptionPrefix()));
 
 	private ModBlocks() {
 	}
 
 	public static void initialize() {
 		CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.FUNCTIONAL_BLOCKS)
-			.register(entries -> entries.accept(WEED_SPAWNER_ITEM));
+			.register(entries -> {
+				entries.accept(WEED_SPAWNER_ITEM);
+				entries.accept(DANDELION_WEED_SPAWNER_ITEM);
+			});
 	}
 }

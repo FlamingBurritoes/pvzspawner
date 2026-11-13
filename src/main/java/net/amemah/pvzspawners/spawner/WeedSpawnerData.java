@@ -2,7 +2,6 @@ package net.amemah.pvzspawners.spawner;
 
 import com.mojang.serialization.Codec;
 import net.amemah.pvzspawners.Pvzpawners;
-import net.amemah.pvzspawners.config.WeedSpawnerConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -34,7 +33,7 @@ public final class WeedSpawnerData extends SavedData {
 	// Transient safe return points are refreshed when an owned mob is loaded and inside its range.
 	final Map<UUID, Vec3> lastInside = new HashMap<>();
 
-	public record Spawner(BlockPos pos, List<SpawnSlot> slots) {
+	public record Spawner(BlockPos pos, List<SpawnSlot> slots, SpawnerKind kind) {
 	}
 
 	public record Ownership(Spawner spawner, SpawnSlot slot) {
@@ -57,12 +56,16 @@ public final class WeedSpawnerData extends SavedData {
 	}
 
 	public void register(BlockPos pos) {
+		register(pos, SpawnerKind.WEED);
+	}
+
+	public void register(BlockPos pos, SpawnerKind kind) {
 		if (!spawners.containsKey(pos)) {
 			List<SpawnSlot> slots = new ArrayList<>();
-			for (int i = 0; i < WeedSpawnerConfig.get().maxWeeds(); i++) {
+			for (int i = 0; i < kind.settings().maxWeeds(); i++) {
 				slots.add(new SpawnSlot(null, 0));
 			}
-			spawners.put(pos.immutable(), new Spawner(pos.immutable(), slots));
+			spawners.put(pos.immutable(), new Spawner(pos.immutable(), slots, kind));
 			setDirty();
 		}
 	}
@@ -76,14 +79,14 @@ public final class WeedSpawnerData extends SavedData {
 	public void recordDeath(UUID entityId, long gameTime) {
 		Ownership owner = ownership.remove(entityId);
 		if (owner != null) {
-			owner.slot().onDeath(gameTime, WeedSpawnerConfig.get().respawnDelayTicks());
+			owner.slot().onDeath(gameTime, owner.spawner().kind().settings().respawnDelayTicks());
 			lastInside.remove(entityId);
 			setDirty();
 		}
 	}
 
 	public void resize(Spawner spawner, ServerLevel level) {
-		int maximum = WeedSpawnerConfig.get().maxWeeds();
+		int maximum = spawner.kind().settings().maxWeeds();
 		while (spawner.slots().size() > maximum) {
 			SpawnSlot removed = spawner.slots().removeLast();
 			if (removed.entityId() != null) {
@@ -154,6 +157,7 @@ public final class WeedSpawnerData extends SavedData {
 		for (Spawner spawner : spawners.values()) {
 			CompoundTag entry = new CompoundTag();
 			entry.putLong("position", spawner.pos().asLong());
+			entry.putString("kind", spawner.kind().name());
 			ListTag slots = new ListTag();
 			for (SpawnSlot slot : spawner.slots()) {
 				CompoundTag savedSlot = new CompoundTag();
@@ -190,7 +194,9 @@ public final class WeedSpawnerData extends SavedData {
 		for (int i = 0; i < entries.size(); i++) {
 			CompoundTag entry = entries.getCompoundOrEmpty(i);
 			BlockPos pos = BlockPos.of(entry.getLongOr("position", 0));
-			Spawner spawner = new Spawner(pos, new ArrayList<>());
+			// Saves from the original Weed-only implementation have no kind field.
+			SpawnerKind kind = SpawnerKind.valueOf(entry.getStringOr("kind", "WEED"));
+			Spawner spawner = new Spawner(pos, new ArrayList<>(), kind);
 			ListTag slots = entry.getListOrEmpty("slots");
 			for (int j = 0; j < slots.size(); j++) {
 				CompoundTag savedSlot = slots.getCompoundOrEmpty(j);

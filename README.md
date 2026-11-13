@@ -2,6 +2,10 @@
 
 Fabric addon for Minecraft **26.1.2** that adds custom blocks spawning entities from Plants & Zombies and Pea Extension. The first block is **Weed Spawner**.
 
+Also includes **Dandelion Weed Spawner** (`pvzpawners:dandelion_weed_spawner`): the same features, but spawns up to **2 Dandelion Weeds** with a **20-second** replacement cooldown. It uses the supplied dandelion slab model/top texture and a top-down inventory icon. Its `WWW / WDW / DDD` recipe uses Dandelion Weed Seed Packets for W and Dirt for D. Both spawners are in Creative's Functional Blocks tab.
+
+Dandelion settings are independent in `config/pvzpawners-dandelion.json` (defaults: `respawnDelaySeconds: 20`, `spawnRadius: 3`, `roamRadius: 6`, `maxWeeds: 2`). Existing `config/pvzpawners.json` settings for regular weeds are unchanged. Restart/reopen the world after editing either file.
+
 ## Weed Spawner quick start
 
 - Find **Weed Spawner** in Creative's **Functional Blocks** tab, or use `/give @s pvzpawners:weed_spawner`.
