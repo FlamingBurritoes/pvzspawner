@@ -1,0 +1,17 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"category": "misc",
+	"pattern": [
+		"WWW",
+		"WDW",
+		"DDD"
+	],
+	"key": {
+		"W": "pea_extension:weed_packet",
+		"D": "minecraft:dirt"
+	},
+	"result": {
+		"id": "pvzpawners:weed_spawner",
+		"count": 1
+	}
+}

@@ -4,17 +4,25 @@ plugins {
 }
 
 repositories {
-	// Add repositories to retrieve artifacts from in here.
-	// You should only use this when depending on other mods because
-	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
-	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
-	// for more information about repositories.
+	maven {
+		name = 'CurseMaven'
+		url = 'https://www.cursemaven.com'
+		content {
+			includeGroup 'curse.maven'
+		}
+	}
 }
 
 fabricApi {
 	configureDataGeneration {
 		client = true
 		modId = "pvzpawners"
+	}
+	configureTests {
+		createSourceSet = true
+		modId = "pvzpawners_test"
+		enableGameTests = true
+		enableClientGameTests = false
 	}
 }
 
@@ -25,6 +33,21 @@ dependencies {
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+	// Required by both Plants & Zombies and Pea Extension, even though this mod uses Java.
+	implementation "net.fabricmc:fabric-language-kotlin:${project.fabric_language_kotlin_version}"
+
+	// Minecraft 26.1+ uses unobfuscated jars, so these use implementation, not modImplementation.
+	// CurseMaven does not supply transitive mod dependencies; declare each requirement explicitly.
+	implementation "curse.maven:plants-and-zombies-1465580:${project.plantz_file_id}"
+	implementation "curse.maven:plants-and-zombies-extension-1646638:${project.pea_extension_file_id}"
+
+	testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.11.4'
+}
+
+tasks.withType(Test).configureEach {
+	useJUnitPlatform()
 }
 
 processResources {

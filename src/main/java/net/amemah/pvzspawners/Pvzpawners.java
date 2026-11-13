@@ -1,6 +1,8 @@
 package net.amemah.pvzspawners;
 
 import net.fabricmc.api.ModInitializer;
+import net.amemah.pvzspawners.block.ModBlocks;
+import net.amemah.pvzspawners.spawner.WeedSpawnerManager;
 
 import net.minecraft.resources.Identifier;
 
@@ -17,11 +19,9 @@ public class Pvzpawners implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-		// This code runs as soon as Minecraft is in a mod-load-ready state.
-		// However, some things (like resources) may still be uninitialized.
-		// Proceed with mild caution.
-
-		LOGGER.info("Hello Fabric world!");
+		ModBlocks.initialize();
+		WeedSpawnerManager.initialize();
+		LOGGER.info("Initialized Weed Spawner");
 	}
 
 	public static Identifier id(String path) {

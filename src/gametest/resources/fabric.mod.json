@@ -1,0 +1,14 @@
+{
+	"schemaVersion": 1,
+	"id": "pvzpawners_test",
+	"version": "1.0.0",
+	"name": "Weed Spawner game tests",
+	"environment": "server",
+	"entrypoints": {
+		"fabric-gametest": ["net.amemah.pvzspawners.spawner.WeedSpawnerGameTests"]
+	},
+	"depends": {
+		"pvzpawners": "*",
+		"fabric-gametest-api-v1": "*"
+	}
+}
