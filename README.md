@@ -1,5 +1,15 @@
 # pvzpawners
 
+## Renewable Plant Pot
+
+Craft a **Renewable Plant Pot** using a normal Plant Pot in the center surrounded by **8 Bottles of Sun**, or use `/give @s pvzpawners:renewable_plant_pot`.
+
+Plant a stationary plant on it using its normal seed packet. The initially empty pot remembers that plant and renews it **60 seconds after death**, with smoke. Breaking the pot kills its linked plant and cancels renewal. Normal taming and Sun healing are allowed and do not start renewal. Normal planter ownership is retained so shovelling uses the dependency's usual permissions, packet drops and tool wear. Successful shovelling permanently clears renewal.
+
+Planting a different stationary plant while renewal is pending replaces the remembered plant and cancels the old timer; renewal then waits for the new plant's death. Walking plant packets are rejected. References and timers survive saving/unloading. The icon uses a normal angled block view.
+
+All three spawners now **face the player when placed**, rather than using a fixed direction. Existing cooldowns and contents are preserved when their facing changes.
+
 ## Plantz Spawner
 
 `/give @s pvzpawners:plantz_spawner` gives the configurable **Plantz Spawner**, also in Creative's Functional Blocks tab. Right-click it for a small screen containing one seed-packet slot above your inventory. It starts empty and accepts only genuine packets whose associated plant reports `canWalk() == true`.

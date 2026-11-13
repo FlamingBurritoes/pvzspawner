@@ -1,9 +1,11 @@
 {
 	"format_version": "1.21.11",
+	"parent": "minecraft:block/block",
 	"credit": "Made with Blockbench",
 	"texture_size": [64, 64],
 	"textures": {
-		"0": "plantz:renewable_plant_pot"
+		"0": "pvzpawners:block/renewable_plant_pot",
+		"particle": "pvzpawners:block/renewable_plant_pot"
 	},
 	"elements": [
 		{

@@ -1,0 +1,7 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"category": "misc",
+	"pattern": ["SSS", "SPS", "SSS"],
+	"key": { "S": "plantz:sun_bottle", "P": "plantz:plant_pot" },
+	"result": { "id": "pvzpawners:renewable_plant_pot", "count": 1 }
+}

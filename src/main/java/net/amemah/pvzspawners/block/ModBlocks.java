@@ -46,6 +46,13 @@ public final class ModBlocks {
 				entries.accept(WEED_SPAWNER_ITEM);
 				entries.accept(DANDELION_WEED_SPAWNER_ITEM);
 				entries.accept(PLANTZ_SPAWNER_ITEM);
+				entries.accept(RENEWABLE_PLANT_POT_ITEM);
 			});
 	}
+	public static final Block RENEWABLE_PLANT_POT = Registry.register(BuiltInRegistries.BLOCK,
+		Pvzpawners.id("renewable_plant_pot"), new RenewablePlantPotBlock(BlockBehaviour.Properties.ofFullCopy(joshxviii.plantz.PazBlocks.PLANT_POT)
+			.setId(ResourceKey.create(Registries.BLOCK, Pvzpawners.id("renewable_plant_pot"))).noOcclusion()));
+	public static final Item RENEWABLE_PLANT_POT_ITEM = Registry.register(BuiltInRegistries.ITEM,
+		Pvzpawners.id("renewable_plant_pot"), new BlockItem(RENEWABLE_PLANT_POT, new Item.Properties()
+			.setId(ResourceKey.create(Registries.ITEM, Pvzpawners.id("renewable_plant_pot"))).useBlockDescriptionPrefix()));
 }

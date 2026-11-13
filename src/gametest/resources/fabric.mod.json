@@ -8,7 +8,8 @@
 		"fabric-gametest": [
 			"net.amemah.pvzspawners.spawner.WeedSpawnerGameTests",
 			"net.amemah.pvzspawners.spawner.DandelionSpawnerGameTests",
-			"net.amemah.pvzspawners.spawner.PlantzSpawnerGameTests"
+			"net.amemah.pvzspawners.spawner.PlantzSpawnerGameTests",
+			"net.amemah.pvzspawners.pot.RenewablePotGameTests"
 		]
 	},
 	"depends": {

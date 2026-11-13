@@ -6,7 +6,9 @@
 		"ExampleMixin",
 		"WeedVariantAccessor",
 		"ManagedWeedMixin",
-		"ManagedWeedTamingMixin"
+		"ManagedWeedTamingMixin",
+		"RenewablePotPlantingMixin",
+		"RenewablePotShovelMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

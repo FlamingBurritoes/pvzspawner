@@ -1,5 +1,8 @@
 {
 	"variants": {
-		"": { "model": "pvzpawners:block/weed_spawner" }
+		"facing=north": { "model": "pvzpawners:block/weed_spawner" },
+		"facing=east": { "model": "pvzpawners:block/weed_spawner", "y": 90 },
+		"facing=south": { "model": "pvzpawners:block/weed_spawner", "y": 180 },
+		"facing=west": { "model": "pvzpawners:block/weed_spawner", "y": 270 }
 	}
 }

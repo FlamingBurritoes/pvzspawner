@@ -13,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /** Consult the dependency's packet mapping and actual plant API, not localized names or guessed tags. */
 public final class SeedPacketFilter {
 	private static final Map<EntityType<?>, Boolean> MOVABLE = new ConcurrentHashMap<>();
+	private static final Map<EntityType<?>, Boolean> STATIONARY = new ConcurrentHashMap<>();
 	private SeedPacketFilter() { }
 
 	public static EntityType<?> resolve(Level level, ItemStack stack) {
@@ -24,5 +25,15 @@ public final class SeedPacketFilter {
 			return probe instanceof Plant plant && plant.canWalk();
 		});
 		return movable ? type : null;
+	}
+
+	public static EntityType<?> resolveStationary(Level level, ItemStack stack) {
+		if (stack.isEmpty()) return null;
+		EntityType<?> type = SeedPacketItem.Companion.typeFromStack(stack);
+		if (type == null || !stack.is(SeedPacketItem.Companion.stackFor(type).getItem())) return null;
+		return STATIONARY.computeIfAbsent(type, key -> {
+			var probe = key.create(level, EntitySpawnReason.SPAWNER);
+			return probe instanceof Plant plant && !plant.canWalk();
+		}) ? type : null;
 	}
 }

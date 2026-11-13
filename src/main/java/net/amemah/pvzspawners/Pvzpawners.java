@@ -4,6 +4,7 @@ import net.fabricmc.api.ModInitializer;
 import net.amemah.pvzspawners.block.ModBlocks;
 import net.amemah.pvzspawners.spawner.WeedSpawnerManager;
 import net.amemah.pvzspawners.menu.SpawnerMenus;
+import net.amemah.pvzspawners.pot.RenewablePotManager;
 
 import net.minecraft.resources.Identifier;
 
@@ -23,7 +24,8 @@ public class Pvzpawners implements ModInitializer {
 		ModBlocks.initialize();
 		SpawnerMenus.initialize();
 		WeedSpawnerManager.initialize();
-		LOGGER.info("Initialized Weed Spawner");
+		RenewablePotManager.initialize();
+		LOGGER.info("Initialized spawners and Renewable Plant Pot");
 	}
 
 	public static Identifier id(String path) {

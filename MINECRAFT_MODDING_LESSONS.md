@@ -18,6 +18,9 @@ This is a portable learning document for future Minecraft projects, not a specif
 - A constructor, spawn hook, seed item or AI goal can add randomization, ownership, squad spawning or movement constraints. Inspect those paths before reusing them.
 - Never assume that `finalizeSpawn` creates only one mob, that all variants are equally likely, or that normal spawning and seed-packet placement are identical.
 - Prefer public APIs. When an essential field has no public API, isolate a narrowly scoped mixin and document the dependency version it was checked against.
+- For a renewable planting surface, reuse the dependency's real seed planting and shovel paths. Automatic ownership during planting may be essential to later healing and shovel permissions; preserve that assignment and adopt afterward. Do not copy an anti-taming rule from wild-entity spawners to player-planted pots: the normal taming item can instead heal an already-owned plant. Inspect the actual item path (Sun in this dependency, not seed packets), test the real interaction and ensure healing retains the living reference without scheduling renewal.
+- A successful interaction result is not necessarily successful removal. Hook the dependency's confirmed seed-packet removal just before discard, after normal permissions/costs, so unload callbacks cannot schedule renewal for a shovelled plant. Leave failed/unauthorized attempts untouched.
+- Inspect tag resource identifiers, not just API constant names: a constant named `PLANT_POT` can point to `gives_plant_pot_protection`. Copy normal-pot behavior rather than accidentally adding special Zen/farming tags.
 
 ## Keep persistent ownership separate from proximity
 
@@ -44,6 +47,8 @@ This is a portable learning document for future Minecraft projects, not a specif
 - Exported Java model JSON stores texture identifiers, not embedded PNGs. Renaming/moving a texture requires updating its resource reference; renaming a texture key requires updating face references too. Reference unchanged vanilla textures through `minecraft:block/...` rather than duplicating them into the mod.
 - Bare exported texture names like `dirt` do not resolve to `minecraft:block/dirt`. Missing vanilla side/bottom textures can be incorrect paths, not missing PNG copies. Preserve custom UVs/geometry while repairing the identifiers.
 - `discard()` skips the normal death presentation. Use normal lethal damage for a death animation/sound, and consider ordinary loot side effects. Start/clear ownership timers before death callbacks to avoid duplicate replacements. Broadcast spawn particles server-side only after an entity was successfully added.
+- Player-facing blocks need a horizontal state property, opposite-player placement, rotation/mirroring and matching blockstate model variants. Changing only facing/waterlogging must not recreate ownership or restart timers; guard source registration/removal by block identity, not full state equality.
+- Do not discard Blockbench geometry just because its rotation format looks unfamiliar. Minecraft 26.1.2 renamed the relevant parser to `CuboidModelElement` and supports both axis/angle and Euler `x/y/z` rotations; inspect the installed parser and bounds before “repairing” art.
 - Validate configuration before applying it. Keep malformed user files intact, report problems clearly, and avoid allowing clients to override multiplayer server rules.
 - Do not invent recipes, assets or gameplay rules that the user explicitly plans to supply later; document temporary assumptions.
 

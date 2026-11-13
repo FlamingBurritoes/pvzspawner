@@ -1,5 +1,32 @@
 # Mod file guide
 
+## Player-facing placement and Renewable Plant Pot
+
+- All three spawners now have `facing=north/east/south/west`, placed opposite the player's horizontal look direction so their front faces the player. `WeedSpawnerBlock` handles placement/rotation/mirroring and all three blockstates rotate the existing models. State-only changes retain the existing source, ownership, packet inventory and timer. Existing blocks without a saved facing use the north default.
+- New block/item ID: `pvzpawners:renewable_plant_pot`, also in Functional Blocks. Recipe: a normal `plantz:plant_pot` centered in eight `plantz:sun_bottle` items. Breaking drops the pot without a remembered plant.
+- Starts with no reference. Players plant through the dependency's actual seed-packet path, preserving its placement, Sun, packet consumption and occupancy checks. `SeedPacketFilter.resolveStationary` accepts canonical packets whose type is a `Plant` with `canWalk() == false`; the actual entity is checked again immediately before addition. Walking/ordinary fake packets cannot establish a reference or consume a packet on rejection.
+- Successfully planting records the entity type, live UUID and planter UUID after the dependency's automatic `tame(player)` assignment, preserving normal planter ownership and shovel permissions. Renewable-pot plants allow normal taming and Sun healing; neither kills them nor starts a renewal timer. The three spawner kinds retain their separate anti-taming rules.
+- Confirmed death/destructive removal starts a fixed **1,200 world-tick (60-second)** renewal deadline. The pot retries once per second while ticking, only if placement/collision/plant occupancy allow it. Renewal creates the same stationary entity type with a fresh UUID, restores planter ownership and sends smoke after successful addition. It does not clone health, equipment, arbitrary packet NBT or attachments.
+- Successfully shovelling follows the dependency's ownership/co-op checks, packet drop and shovel durability rules, then permanently clears the reference before the discard/unload callback. Rejected interactions retain it. Automatic successful seed-packet uprooting also clears renewal rather than creating duplicate plants.
+- Planting while a previous reference is awaiting renewal replaces its type/UUID/planter and cancels the old deadline. The new living plant must die before any further renewal timer starts.
+- Breaking the pot removes its reference first and kills the linked plant; cleanup for unloaded plants persists until their next load. Missing/unloaded UUIDs are never inferred dead, so unloading cannot duplicate plants. References, pending deadlines and queued break deaths use dimension SavedData independently of the spawner configuration.
+- Normal pot compatibility: copies normal pot block properties and delegates its outline/interaction shapes; supports normal facing, waterlogging and the dependency's plant-head attachment interaction. Tag additions use the **actual** `plantz:gives_plant_pot_protection` identifier (the API constant is named `PLANT_POT`), plus `plantable` and `digger_breakable`. It does not grant Zen-pot farming/growth behavior.
+- The supplied model/PNG are retained, including all geometry/UVs/multi-axis rotations. Only the model texture/particle paths and standard block parent were fixed. Minecraft 26.1.2's `CuboidModelElement.Deserializer` explicitly supports the exported Euler `x/y/z` rotations and the supplied bounds. The inventory model uses the normal dirt/cube angle `[30, 225, 0]`, scale `0.625`, not a top-down spawner transform. Client appearance still needs an in-game visual check.
+
+New Java files, relative to `src/main/java/net/amemah/pvzspawners/`:
+
+| File | Purpose |
+| --- | --- |
+| `block/RenewablePlantPotBlock.java` | Normal pot interactions/shapes/waterlogging, facing and source-break cleanup. |
+| `pot/RenewablePotData.java` | Persistent type, planter, live UUID/deadline and unloaded break cleanup. |
+| `pot/RenewablePotManager.java` | Adoption, death/shovel lifecycle, safe renewal and smoke; normal healing/taming remains allowed. |
+| `mixin/RenewablePotPlantingMixin.java` | Narrow actual seed planting validation; adopt after initial planter assignment. |
+| `mixin/RenewablePotShovelMixin.java` | Forget successful packet removal before its discard callback. |
+
+New resource files: `assets/pvzpawners/{blockstates,items,models/item}/renewable_plant_pot.json`, `data/pvzpawners/recipe/renewable_plant_pot.json`, `data/pvzpawners/loot_table/blocks/renewable_plant_pot.json`, and `data/plantz/tags/block/{gives_plant_pot_protection,plantable,digger_breakable}.json`. The existing block model, translations, block/item registration, initializer and mixin list were extended. New integration coverage is in `src/gametest/java/net/amemah/pvzspawners/pot/RenewablePotGameTests.java`.
+
+Verification: full Gradle `build` passed with **29 server GameTests** (28 addon tests plus Fabric's test) and **12 JUnit tests**. Nine new integration tests cover all four placement directions/rotation/mirroring, retaining Plantz inventory and source timers on rotation, empty/invalid pots, actual initial planting, 60-second renewal, restored owner-only shovel permissions, successful/unauthorized/co-op shovelling, break cleanup, pending-type replacement, saved references/deadlines, unloaded cleanup/no duplication, obstructed renewal/retry and the actual recipe. The previous anti-taming test has been changed to exercise actual Sun healing and harmless taming, checking that the living reference/deadline stays unchanged before a real death. Co-op settings are changed only synchronously inside tests and restored in `finally`; runtime code retains the dependency's configured rules. The release JAR was checked for pot code/art/resources, four variants per spawner, and no test classes. All source resource JSON parsed successfully. Client model/icon/smoke appearance remains a manual visual check.
+
 ## Initial timers, upgrade recipe and inventory lighting
 
 - All source kinds now create empty slots with `readyAt = currentWorldGameTime + floor(respawnDelaySeconds / 2) * 20`. Defaults: Weed 30 seconds, Dandelion Weed 10 seconds, Plantz 90 seconds. Rounding is in whole seconds (61 seconds becomes 30, not 30.5); a custom 1-second regular cooldown gives a 0-second initial delay as specified by the formula.
@@ -176,7 +203,7 @@ Manual follow-up checklist: inspect the Creative item and model in a client; rep
 
 - Gradle `build`: **passed**, including the requested crafting recipe.
 - **12 JUnit tests passed** (timer/ownership state, circular range checks, config validation and whole-second initial-delay rounding).
-- **19 addon GameTests passed** in a real headless Minecraft server: eleven regular Weed tests, three dandelion tests, and five generic Plantz tests covering packet filtering, inventory/menu behavior, selection lifecycle, initial/full cooldowns and the upgrade recipe. The runner reported **20 passed** including Fabric's own test.
+- **28 addon GameTests passed** in a real headless Minecraft server: eleven regular Weed tests, three dandelion tests, five generic Plantz tests and nine Renewable Pot/facing tests. The runner reported **29 passed** including Fabric's own test. Coverage includes the existing spawner behavior plus renewal lifecycle, owner/co-op shovelling, persistence, blocked renewal and player-facing placement.
 - Checked `build/libs/pvzpawners-1.0.0.jar`: block assets and classes are included; test classes are not.
 - The release JAR contains the new shovel tag and no old pickaxe tag. Custom model geometry, UVs and PNG art were preserved; only the invalid vanilla texture identifiers were repaired. Both referenced vanilla PNG paths were confirmed present in Minecraft's JAR.
 - Client rendering (including smoke/death appearance), a complete world restart/chunk-unload cycle, and actual seed-packet taming interactions remain manual checks. The cleanup test uses a real tamed-state weed and the actual entity-load callback; it does not simulate a complete chunk save/reload. Upstream mods emitted their own existing mixin/loot/resource warnings during the server tests; those were not changed by this addon.

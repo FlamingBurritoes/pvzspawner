@@ -1,3 +1,8 @@
 {
-	"variants": { "": { "model": "pvzpawners:block/plantz_spawner" } }
+	"variants": {
+		"facing=north": { "model": "pvzpawners:block/plantz_spawner" },
+		"facing=east": { "model": "pvzpawners:block/plantz_spawner", "y": 90 },
+		"facing=south": { "model": "pvzpawners:block/plantz_spawner", "y": 180 },
+		"facing=west": { "model": "pvzpawners:block/plantz_spawner", "y": 270 }
+	}
 }
