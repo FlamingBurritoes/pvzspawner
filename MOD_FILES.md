@@ -45,7 +45,7 @@ Paths below are relative to `src/main/resources/`.
 | `assets/pvzpawners/blockstates/weed_spawner.json` | Connects the placed block to its model. |
 | `assets/pvzpawners/models/block/weed_spawner.json` | User-supplied slab-like Blockbench model, preserved during gameplay changes. |
 | `assets/pvzpawners/textures/block/weed_spawner_top.png` | User-supplied top texture, preserved during gameplay changes. |
-| `assets/pvzpawners/models/item/weed_spawner.json` | Reuses the block model in the inventory. |
+| `assets/pvzpawners/models/item/weed_spawner.json` | Reuses the block model, with a GUI-only 90-degree rotation to show the top face in inventory/Creative slots. Held and placed appearances are unchanged. |
 | `assets/pvzpawners/items/weed_spawner.json` | Modern inventory-item model definition. |
 | `assets/pvzpawners/lang/en_us.json` | Gives the block its English display name, Weed Spawner. |
 | `data/pvzpawners/loot_table/blocks/weed_spawner.json` | Makes the block drop itself when mined, with vanilla explosion-survival rules. |
@@ -106,7 +106,7 @@ Valid limits: delay 1..86400 seconds, spawn radius 1..32, roam radius from spawn
 2. Custom PNGs belong in `src/main/resources/assets/pvzpawners/textures/block/`. The current custom top texture is `weed_spawner_top.png`.
 3. Use resource identifiers in the model's texture entries: `pvzpawners:block/weed_spawner_top` for the custom top, `minecraft:block/dirt` for vanilla dirt, and `minecraft:block/grass_block_side` for vanilla grass sides. Leave off `.png`; a bare `dirt` reference is not the same as `minecraft:block/dirt`. Existing art files were not changed as part of the gameplay update.
 4. Restart the development client, or rebuild/copy the new mod JAR and restart a normal client. F3+T reloads textures only if the updated file is already present on the running game's resource classpath.
-5. Both placed and inventory appearances update because they share the model. The namespace is **pvzpawners**, not pvzspawners. If you later want different top/side/bottom art or a custom shape, provide those textures/Blockbench model and we can change the model independently.
+5. The item shares the block's textures/model, but its GUI-only display transform looks straight down at the top for inventory/Creative slots. Editing the top texture updates that preview too. Held and placed appearances are not rotated by this GUI transform. The namespace is **pvzpawners**, not pvzspawners.
 
 ### Testing
 
