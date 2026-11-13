@@ -14,6 +14,7 @@ This is a portable learning document for future Minecraft projects, not a specif
 ## Inspect behavior, not just names
 
 - A variant may be entity data on one entity type, rather than a separate entity registry entry.
+- A configurable entity spawner should consult the dependency's canonical packet-to-type mapping and capability API, not names alone. Keep menu slot filtering and server inventory validation aligned; reject fake items carrying valid-looking entity components. Capability checks should create an unspawned probe, not add mobs to the world.
 - A constructor, spawn hook, seed item or AI goal can add randomization, ownership, squad spawning or movement constraints. Inspect those paths before reusing them.
 - Never assume that `finalizeSpawn` creates only one mob, that all variants are equally likely, or that normal spawning and seed-packet placement are identical.
 - Prefer public APIs. When an essential field has no public API, isolate a narrowly scoped mixin and document the dependency version it was checked against.
@@ -25,6 +26,7 @@ This is a portable learning document for future Minecraft projects, not a specif
 - An unloaded entity is not dead. Do not refill a slot merely because a UUID cannot be found in loaded chunks.
 - Persist ownership and respawn deadlines. Listen for confirmed deaths even when the owning block's chunk is unloaded.
 - Decide whether cooldowns use world ticks or real time, whether initial slots fill immediately, and what happens when a source block is broken.
+- Initial placement/selection cooldowns are distinct from death cooldowns. Calculate the initial deadline from the current world time, not zero, and persist it. Restart it on block replacement and selection reinsertion to prevent instant refill abuse; do not shorten later death cooldowns. Specify whether rounding happens in seconds or ticks and test odd values.
 - When source destruction must remove its entities, clear ownership before discarding loaded entities and persist pending removals for unloaded UUIDs. Otherwise death/removal callbacks may schedule replacements or unloaded tamed mobs may survive cleanup. Test tame and wild mobs, nearby unrelated sources, and save/load of pending cleanup separately.
 - Clarify whether “remove tamed mobs” means on source destruction or immediately on taming. These are different policies. To prevent pets, intercept the normal tame operation before ownership/advancements are granted, check the source UUID link, and keep a tick/load fallback for old saves or direct tame-state changes. Test that unrelated natural mobs remain tamable.
 - AI home ranges are usually soft guidance, not hard barriers. If strict confinement is required, enforce it server-side as well, without loading chunks or teleporting mobs into solids.
@@ -33,8 +35,10 @@ This is a portable learning document for future Minecraft projects, not a specif
 ## Resources and configuration
 
 - A block model, outline/selection shape, collision shape and light-occlusion shape are different things. A full-size visual does not require full-block collision.
+- Top-down block-item icons may look too dark under normal side/block lighting. Set `gui_light` to `front` on the item model instead of modifying PNG brightness or world lighting; verify the final appearance in a client.
 - Matching a vanilla block's mining behavior needs more than hardness. Copy appropriate block properties, set the correct mining-tool tag, and verify hand drops and tool speed. Copying dirt's properties does not automatically copy its shovel tag.
 - Modern inventory items may require an `assets/<namespace>/items/` definition in addition to a model. Match the exact version's resource layout.
+- Inventory UIs need a persistent server container/menu plus a client-only screen. Persist actual slot contents; closing the UI must not erase them. Clear ownership before killing replaced selections, and clear/drop contents exactly once on block destruction. Minecraft 26.1 uses `ValueInput`/`ValueOutput`, `BlockEntity.preRemoveSideEffects`, and `GuiGraphicsExtractor`; older GUI rendering and container-listener examples may not apply.
 - Fabric API names also change with versions/mappings: in the checked 26.1.2 API, creative additions use `CreativeModeTabEvents.modifyOutputEvent`, not older `ItemGroupEvents` examples; server world ticks are named `END_LEVEL_TICK`. `Level.random` is protected: use `getRandom()`. These mismatches were caught by compiling against the installed libraries.
 - Use lowercase resource paths and valid namespaces. Reuse placeholder vanilla textures until original art is ready.
 - Exported Java model JSON stores texture identifiers, not embedded PNGs. Renaming/moving a texture requires updating its resource reference; renaming a texture key requires updating face references too. Reference unchanged vanilla textures through `minecraft:block/...` rather than duplicating them into the mod.

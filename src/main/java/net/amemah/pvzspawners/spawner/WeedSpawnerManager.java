@@ -13,6 +13,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import zombieman.pea_extension.entity.GWPlant;
+import joshxviii.plantz.entity.plant.Plant;
 import zombieman.pea_extension.entity.Weed;
 
 import java.util.Map;
@@ -27,7 +28,7 @@ public final class WeedSpawnerManager {
 
 	/** Called before normal taming grants ownership; UUID ownership, not nearby distance, determines scope. */
 	public static boolean despawnForTaming(Entity entity) {
-		if (!(entity instanceof GWPlant weed) || weed.isRemoved() || !(weed.level() instanceof ServerLevel level)) {
+		if (!(entity instanceof Plant weed) || weed.isRemoved() || !(weed.level() instanceof ServerLevel level)) {
 			return false;
 		}
 		WeedSpawnerData data = WeedSpawnerData.get(level);
@@ -42,7 +43,7 @@ public final class WeedSpawnerManager {
 
 	/** Stop physics/AI/knockback from walking across the boundary, rather than relying only on recall. */
 	public static Vec3 limitMovement(Entity entity, Vec3 movement) {
-		if (!(entity instanceof GWPlant) || !entity.entityTags().contains(WeedSpawnerData.MANAGED_TAG)
+		if (!(entity instanceof Plant) || !entity.entityTags().contains(WeedSpawnerData.MANAGED_TAG)
 			|| !(entity.level() instanceof ServerLevel level)) {
 			return movement;
 		}
@@ -66,18 +67,18 @@ public final class WeedSpawnerManager {
 	public static void initialize() {
 		ServerLifecycleEvents.SERVER_STARTING.register(server -> WeedSpawnerConfig.load());
 		ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> {
-			if (entity instanceof GWPlant && entity.level() instanceof ServerLevel level) {
+			if (entity instanceof Plant && entity.level() instanceof ServerLevel level) {
 				WeedSpawnerData.get(level).recordDeath(entity.getUUID(), level.getGameTime());
 			}
 		});
 		ServerEntityEvents.ENTITY_UNLOAD.register((entity, level) -> {
 			// Chunk unloading and server shutdown do NOT free the slot. A real discard does.
-			if (entity instanceof GWPlant && entity.getRemovalReason() != null && entity.getRemovalReason().shouldDestroy()) {
+			if (entity instanceof Plant && entity.getRemovalReason() != null && entity.getRemovalReason().shouldDestroy()) {
 				WeedSpawnerData.get(level).recordDeath(entity.getUUID(), level.getGameTime());
 			}
 		});
 		ServerEntityEvents.ENTITY_LOAD.register((entity, level) -> {
-			if (entity instanceof GWPlant weed) {
+			if (entity instanceof Plant weed) {
 				WeedSpawnerData data = WeedSpawnerData.get(level);
 				if (data.consumePendingDeath(weed.getUUID())) {
 					weed.kill(level);
@@ -98,7 +99,7 @@ public final class WeedSpawnerManager {
 		// This pass also runs when the source block's chunk is not ticking.
 		for (Map.Entry<UUID, WeedSpawnerData.Ownership> entry : data.ownership().entrySet()) {
 			Entity entity = level.getEntity(entry.getKey());
-			if (entity instanceof GWPlant weed && weed.isAlive()) {
+			if (entity instanceof Plant weed && weed.isAlive()) {
 				if (weed.isTame()) {
 					// Fallback for old saves or mods/commands that set the tame flag without calling tame().
 					despawnForTaming(weed);
@@ -131,7 +132,7 @@ public final class WeedSpawnerManager {
 	}
 
 	private static void spawn(ServerLevel level, WeedSpawnerData data, WeedSpawnerData.Spawner spawner, SpawnSlot slot) {
-		GWPlant weed = spawner.kind().create(level);
+		Plant weed = spawner.kind().create(level, spawner.pos());
 		if (weed == null) {
 			return;
 		}
@@ -148,7 +149,7 @@ public final class WeedSpawnerManager {
 		weed.snapTo(location, level.getRandom().nextFloat() * 360, 0);
 		weed.setPersistenceRequired();
 		weed.setHomeTo(spawner.pos(), spawner.kind().settings().roamRadius());
-		weed.setCommand(GWPlant.Command.WANDER);
+		if (weed instanceof GWPlant walker) walker.setCommand(GWPlant.Command.WANDER);
 		if (level.addFreshEntity(weed)) {
 			data.occupy(spawner, slot, weed.getUUID());
 			weed.entityTags().add(WeedSpawnerData.MANAGED_TAG);
@@ -159,7 +160,7 @@ public final class WeedSpawnerManager {
 		}
 	}
 
-	private static void confine(ServerLevel level, WeedSpawnerData data, WeedSpawnerData.Spawner spawner, GWPlant weed) {
+	private static void confine(ServerLevel level, WeedSpawnerData data, WeedSpawnerData.Spawner spawner, Plant weed) {
 		BlockPos origin = spawner.pos();
 		int radius = spawner.kind().settings().roamRadius();
 		weed.setHomeTo(origin, radius);
@@ -191,7 +192,7 @@ public final class WeedSpawnerManager {
 			&& Math.abs(position.y - origin.getY()) <= radius;
 	}
 
-	private static Vec3 findSafePosition(ServerLevel level, BlockPos origin, GWPlant weed, int radius) {
+	private static Vec3 findSafePosition(ServerLevel level, BlockPos origin, Plant weed, int radius) {
 		for (int attempt = 0; attempt < SPAWN_ATTEMPTS; attempt++) {
 			int dx = level.getRandom().nextInt(radius * 2 + 1) - radius;
 			int dz = level.getRandom().nextInt(radius * 2 + 1) - radius;
@@ -209,7 +210,7 @@ public final class WeedSpawnerManager {
 		return null;
 	}
 
-	private static boolean isSafe(ServerLevel level, GWPlant weed, Vec3 location) {
+	private static boolean isSafe(ServerLevel level, Plant weed, Vec3 location) {
 		BlockPos feet = BlockPos.containing(location);
 		if (!level.hasChunkAt(feet) || !level.hasChunkAt(feet.above()) || !level.getWorldBorder().isWithinBounds(feet)) {
 			return false;

@@ -7,7 +7,8 @@
 	"entrypoints": {
 		"fabric-gametest": [
 			"net.amemah.pvzspawners.spawner.WeedSpawnerGameTests",
-			"net.amemah.pvzspawners.spawner.DandelionSpawnerGameTests"
+			"net.amemah.pvzspawners.spawner.DandelionSpawnerGameTests",
+			"net.amemah.pvzspawners.spawner.PlantzSpawnerGameTests"
 		]
 	},
 	"depends": {

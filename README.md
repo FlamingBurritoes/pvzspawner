@@ -1,5 +1,15 @@
 # pvzpawners
 
+## Plantz Spawner
+
+`/give @s pvzpawners:plantz_spawner` gives the configurable **Plantz Spawner**, also in Creative's Functional Blocks tab. Right-click it for a small screen containing one seed-packet slot above your inventory. It starts empty and accepts only genuine packets whose associated plant reports `canWalk() == true`.
+
+The packet stays in the slot and is not consumed. A valid packet waits **90 seconds** before initially spawning one matching plant; after death/taming, replacement takes the full **180 seconds** by default. Removing the packet immediately kills the linked plant and clears the selection. Replacing/reinserting the packet kills the previous selection and starts a fresh initial wait. Breaking the spawner kills its plant and drops the inserted packet separately from the block.
+
+The existing smoke, 3-block spawning radius, 6-block roaming radius, dirt-like mining, top-down icon, anti-taming deaths and persistent UUID ownership are shared. Configure this source independently in `config/pvzpawners-plantz.json` (defaults: `180 / 3 / 6 / 1`, using the same field names as the other configs). Craft one Plantz Spawner with **either a Weed Spawner or a Dandelion Weed Spawner in the center, surrounded by eight Bottles of Sun**.
+
+All spawners wait `floor(respawnDelaySeconds / 2)` whole seconds for their initial spawn: **Weed 30s, Dandelion Weed 10s, Plantz 90s** by default. Later deaths use the full delay. Breaking/replacing a source restarts the initial wait; saving/reopening preserves its recorded deadline. Inventory/Creative icons use front lighting to avoid darkened top-down previews.
+
 Fabric addon for Minecraft **26.1.2** that adds custom blocks spawning entities from Plants & Zombies and Pea Extension. The first block is **Weed Spawner**.
 
 Also includes **Dandelion Weed Spawner** (`pvzpawners:dandelion_weed_spawner`): the same features, but spawns up to **2 Dandelion Weeds** with a **20-second** replacement cooldown. It uses the supplied dandelion slab model/top texture and a top-down inventory icon. Its `WWW / WDW / DDD` recipe uses Dandelion Weed Seed Packets for W and Dirt for D. Both spawners are in Creative's Functional Blocks tab.
@@ -9,7 +19,7 @@ Dandelion settings are independent in `config/pvzpawners-dandelion.json` (defaul
 ## Weed Spawner quick start
 
 - Find **Weed Spawner** in Creative's **Functional Blocks** tab, or use `/give @s pvzpawners:weed_spawner`.
-- Place it beside open, solid ground. It fills three owned slots within a horizontal three-block radius. Each dead weed is replaced after 60 seconds of game time, provided there is a safe spot and the source chunk is ticking.
+- Place it beside open, solid ground. After an initial 30-second wait, it fills three owned slots within a horizontal three-block radius. Each dead weed is replaced after the full 60 seconds of game time, provided there is a safe spot and the source chunk is ticking.
 - The nine Weed variants have equal chances. Movement is limited to six blocks from the source; this does not affect naturally spawned weeds.
 - The block uses the supplied slab-like model and a half-height collision/selection shape. Craft one spawner using the pattern `WWW / WDW / DDD`, where W is a Weed Seed Packet and D is Dirt (five packets and four dirt).
 - Mine and collect it by hand like dirt; shovels are the efficient tool. Breaking/removing it kills all linked weeds with their normal death animation. Unloaded linked weeds die when they next load.

@@ -60,10 +60,14 @@ public final class WeedSpawnerData extends SavedData {
 	}
 
 	public void register(BlockPos pos, SpawnerKind kind) {
+		register(pos, kind, 0);
+	}
+
+	public void register(BlockPos pos, SpawnerKind kind, long gameTime) {
 		if (!spawners.containsKey(pos)) {
 			List<SpawnSlot> slots = new ArrayList<>();
 			for (int i = 0; i < kind.settings().maxWeeds(); i++) {
-				slots.add(new SpawnSlot(null, 0));
+				slots.add(new SpawnSlot(null, gameTime + kind.settings().initialDelayTicks()));
 			}
 			spawners.put(pos.immutable(), new Spawner(pos.immutable(), slots, kind));
 			setDirty();
@@ -95,7 +99,7 @@ public final class WeedSpawnerData extends SavedData {
 			setDirty();
 		}
 		while (spawner.slots().size() < maximum) {
-			spawner.slots().add(new SpawnSlot(null, 0));
+			spawner.slots().add(new SpawnSlot(null, level.getGameTime() + spawner.kind().settings().initialDelayTicks()));
 			setDirty();
 		}
 	}

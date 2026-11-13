@@ -1,5 +1,6 @@
 {
 	"parent": "pvzpawners:block/weed_spawner",
+	"gui_light": "front",
 	"display": {
 		"gui": {
 			"rotation": [90, 0, 0],

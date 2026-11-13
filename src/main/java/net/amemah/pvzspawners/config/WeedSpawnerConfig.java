@@ -13,6 +13,7 @@ public final class WeedSpawnerConfig {
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 	private static Settings current = new Settings(60, 3, 6, 3);
 	private static Settings dandelion = new Settings(20, 3, 6, 2);
+	private static Settings plantz = new Settings(180, 3, 6, 1);
 
 	private WeedSpawnerConfig() {
 	}
@@ -33,6 +34,11 @@ public final class WeedSpawnerConfig {
 		public long respawnDelayTicks() {
 			return respawnDelaySeconds * 20L;
 		}
+
+		public long initialDelayTicks() {
+			// Round down whole seconds before converting to ticks (e.g. 61s -> 30s, not 30.5s).
+			return (respawnDelaySeconds / 2) * 20L;
+		}
 	}
 
 	public static Settings get() {
@@ -42,11 +48,13 @@ public final class WeedSpawnerConfig {
 	public static void load() {
 		current = loadFile("pvzpawners.json", new Settings(60, 3, 6, 3));
 		dandelion = loadFile("pvzpawners-dandelion.json", new Settings(20, 3, 6, 2));
+		plantz = loadFile("pvzpawners-plantz.json", new Settings(180, 3, 6, 1));
 	}
 
 	public static Settings getDandelion() {
 		return dandelion;
 	}
+	public static Settings getPlantz() { return plantz; }
 
 	private static Settings loadFile(String name, Settings defaults) {
 		Path file = FabricLoader.getInstance().getConfigDir().resolve(name);

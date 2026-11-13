@@ -33,12 +33,19 @@ public final class ModBlocks {
 
 	private ModBlocks() {
 	}
+	public static final Block PLANTZ_SPAWNER = Registry.register(BuiltInRegistries.BLOCK,
+		Pvzpawners.id("plantz_spawner"), new PlantzSpawnerBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.DIRT)
+			.setId(ResourceKey.create(Registries.BLOCK, Pvzpawners.id("plantz_spawner"))).noOcclusion()));
+	public static final Item PLANTZ_SPAWNER_ITEM = Registry.register(BuiltInRegistries.ITEM,
+		Pvzpawners.id("plantz_spawner"), new BlockItem(PLANTZ_SPAWNER, new Item.Properties()
+			.setId(ResourceKey.create(Registries.ITEM, Pvzpawners.id("plantz_spawner"))).useBlockDescriptionPrefix()));
 
 	public static void initialize() {
 		CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.FUNCTIONAL_BLOCKS)
 			.register(entries -> {
 				entries.accept(WEED_SPAWNER_ITEM);
 				entries.accept(DANDELION_WEED_SPAWNER_ITEM);
+				entries.accept(PLANTZ_SPAWNER_ITEM);
 			});
 	}
 }

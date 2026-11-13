@@ -22,14 +22,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DandelionSpawnerGameTests {
-	@GameTest(maxTicks = 100)
+	@GameTest(maxTicks = 800)
 	public void mixedSpawnerKindsKeepSeparateLimitsAndCooldowns(GameTestHelper helper) {
 		BlockPos dandelionPos = place(helper);
 		BlockPos normalRelative = new BlockPos(2, 1, 4);
 		helper.setBlock(normalRelative, ModBlocks.WEED_SPAWNER);
 		BlockPos normalPos = helper.absolutePos(normalRelative);
 		ServerLevel level = helper.getLevel();
-		helper.runAtTickTime(60, () -> {
+		helper.runAtTickTime(660, () -> {
 			var data = WeedSpawnerData.get(level);
 			var normalIds = data.ownership().entrySet().stream()
 				.filter(entry -> entry.getValue().spawner().pos().equals(normalPos)).map(java.util.Map.Entry::getKey).toList();
@@ -68,11 +68,12 @@ public class DandelionSpawnerGameTests {
 			.map(entity -> (DandelionWeed) entity).toList();
 	}
 
-	@GameTest(maxTicks = 550)
+	@GameTest(maxTicks = 800)
 	public void twoDandelionsRespawnAfterTwentySecondsAndShareProtection(GameTestHelper helper) {
 		BlockPos pos = place(helper);
 		ServerLevel level = helper.getLevel();
-		helper.runAtTickTime(40, () -> {
+		helper.runAtTickTime(190, () -> helper.assertTrue(owned(level, pos).isEmpty(), "Initial dandelions must wait ten seconds"));
+		helper.runAtTickTime(240, () -> {
 			List<DandelionWeed> weeds = owned(level, pos);
 			helper.assertTrue(weeds.size() == 2, "Dandelion source must spawn exactly two Dandelion Weeds");
 			DandelionWeed first = weeds.getFirst();
@@ -88,8 +89,8 @@ public class DandelionSpawnerGameTests {
 				WeedSpawnerData.CODEC.encodeStart(NbtOps.INSTANCE, data).getOrThrow()).getOrThrow();
 			helper.assertTrue(restored.find(weeds.get(1).getUUID()).spawner().kind() == SpawnerKind.DANDELION_WEED,
 				"Dandelion source kind was lost during save/load");
-			helper.runAtTickTime(439, () -> helper.assertTrue(owned(level, pos).size() == 1, "Dandelion respawned too soon"));
-			helper.runAtTickTime(480, () -> {
+			helper.runAtTickTime(639, () -> helper.assertTrue(owned(level, pos).size() == 1, "Dandelion respawned too soon"));
+			helper.runAtTickTime(680, () -> {
 				List<DandelionWeed> replacements = owned(level, pos);
 				helper.assertTrue(replacements.size() == 2, "Dandelion did not respawn after twenty seconds");
 				DandelionWeed tameAttempt = replacements.getFirst();

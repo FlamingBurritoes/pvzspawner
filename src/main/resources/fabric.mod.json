@@ -15,6 +15,7 @@
 	"icon": "assets/pvzpawners/icon.png",
 	"environment": "*",
 	"entrypoints": {
+		"client": ["net.amemah.pvzspawners.client.PvzpawnersClient"],
 		"main": [
 			"net.amemah.pvzspawners.Pvzpawners"
 		],

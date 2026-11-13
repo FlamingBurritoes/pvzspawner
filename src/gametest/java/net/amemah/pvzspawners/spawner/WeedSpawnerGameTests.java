@@ -26,6 +26,32 @@ import java.util.List;
 import java.util.UUID;
 
 public class WeedSpawnerGameTests {
+	@GameTest(maxTicks = 850)
+	public void breakingAndReplacingRestartsInitialDelayAndDeadlineSurvivesSave(GameTestHelper helper) {
+		BlockPos pos = placeSpawner(helper);
+		var level = helper.getLevel();
+		var data = WeedSpawnerData.get(level);
+		var first = data.spawners().stream().filter(source -> source.pos().equals(pos)).findFirst().orElseThrow();
+		long originalDeadline = first.slots().getFirst().readyAt();
+		helper.assertTrue(originalDeadline == level.getGameTime() + 600, "Initial deadline must be relative to placement world time");
+		var restored = WeedSpawnerData.CODEC.parse(NbtOps.INSTANCE,
+			WeedSpawnerData.CODEC.encodeStart(NbtOps.INSTANCE, data).getOrThrow()).getOrThrow();
+		var savedSource = restored.spawners().stream().filter(source -> source.pos().equals(pos)).findFirst().orElseThrow();
+		helper.assertTrue(savedSource.slots().getFirst().readyAt() == originalDeadline, "Saving must preserve the initial deadline");
+		helper.runAtTickTime(100, () -> {
+			level.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
+			level.setBlockAndUpdate(pos, ModBlocks.WEED_SPAWNER.defaultBlockState());
+			var replaced = data.spawners().stream().filter(source -> source.pos().equals(pos)).findFirst().orElseThrow();
+			helper.assertTrue(replaced.slots().getFirst().readyAt() == level.getGameTime() + 600,
+				"Replacement must wait a fresh initial delay, not reuse the old deadline");
+		});
+		helper.runAtTickTime(650, () -> helper.assertTrue(owned(level, pos).isEmpty(), "Breaking/replacing must not bypass the initial delay"));
+		helper.runAtTickTime(740, () -> {
+			helper.assertTrue(owned(level, pos).size() == 3, "Replaced source must eventually fill after its new initial delay");
+			helper.succeed();
+		});
+	}
+
 	@GameTest
 	public void craftsWeedSpawnerFromRequestedPattern(GameTestHelper helper) {
 		List<ItemStack> ingredients = new ArrayList<>();
@@ -65,11 +91,12 @@ public class WeedSpawnerGameTests {
 			.map(entity -> (Weed) entity).toList();
 	}
 
-	@GameTest(maxTicks = 1400)
+	@GameTest(maxTicks = 2100)
 	public void fillsThreeSlotsAndRespawnsOnlyAfterOneMinute(GameTestHelper helper) {
 		BlockPos pos = placeSpawner(helper);
 		ServerLevel level = helper.getLevel();
-		helper.runAtTickTime(40, () -> {
+		helper.runAtTickTime(590, () -> helper.assertTrue(owned(level, pos).isEmpty(), "Initial spawn must wait thirty seconds"));
+		helper.runAtTickTime(640, () -> {
 			List<Weed> weeds = owned(level, pos);
 			helper.assertTrue(weeds.size() == 3, "Spawner must own exactly three weeds");
 			for (Weed weed : weeds) {
@@ -80,24 +107,24 @@ public class WeedSpawnerGameTests {
 			long deathTime = level.getGameTime();
 			weeds.getFirst().kill(level);
 			helper.assertTrue(WeedSpawnerData.get(level).find(killedId) == null, "Death must free only the killed weed's slot");
-			helper.runAtTickTime(1239, () -> {
+			helper.runAtTickTime(1839, () -> {
 				helper.assertTrue(level.getGameTime() - deathTime < 1200, "Pre-deadline check ran too late");
 				helper.assertTrue(owned(level, pos).size() == 2, "Weed respawned before its 60-second cooldown");
 			});
-			helper.runAtTickTime(1280, () -> {
+			helper.runAtTickTime(1880, () -> {
 				helper.assertTrue(owned(level, pos).size() == 3, "Dead weed was not replaced after its cooldown");
 				helper.succeed();
 			});
 		});
 	}
 
-	@GameTest(maxTicks = 100)
+	@GameTest(maxTicks = 750)
 	public void overlappingSpawnersKeepSeparateOwnership(GameTestHelper helper) {
 		BlockPos first = placeSpawner(helper);
 		BlockPos secondRelative = new BlockPos(2, 1, 4);
 		helper.setBlock(secondRelative, ModBlocks.WEED_SPAWNER);
 		BlockPos second = helper.absolutePos(secondRelative);
-		helper.runAtTickTime(60, () -> {
+		helper.runAtTickTime(660, () -> {
 			List<Weed> firstWeeds = owned(helper.getLevel(), first);
 			List<Weed> secondWeeds = owned(helper.getLevel(), second);
 			helper.assertTrue(firstWeeds.size() == 3 && secondWeeds.size() == 3,
@@ -111,11 +138,11 @@ public class WeedSpawnerGameTests {
 		});
 	}
 
-	@GameTest(maxTicks = 100)
+	@GameTest(maxTicks = 750)
 	public void confinesMovementAndDespawnsOnBlockRemoval(GameTestHelper helper) {
 		BlockPos pos = placeSpawner(helper);
 		ServerLevel level = helper.getLevel();
-		helper.runAtTickTime(40, () -> {
+		helper.runAtTickTime(640, () -> {
 			List<Weed> weeds = owned(level, pos);
 			helper.assertTrue(weeds.size() == 3, "Expected three initial weeds");
 			Weed weed = weeds.getFirst();
@@ -123,7 +150,7 @@ public class WeedSpawnerGameTests {
 			helper.assertTrue(SpawnerRange.contains(pos.getX() + 0.5, pos.getZ() + 0.5,
 				weed.getX(), weed.getZ(), 6), "Movement escaped the six-block boundary");
 			weed.teleportTo(pos.getX() + 12.5, pos.getY(), pos.getZ() + 0.5);
-			helper.runAtTickTime(45, () -> {
+			helper.runAtTickTime(645, () -> {
 				helper.assertTrue(SpawnerRange.contains(pos.getX() + 0.5, pos.getZ() + 0.5,
 					weed.getX(), weed.getZ(), 6), "Out-of-range teleport was not recalled");
 				level.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
@@ -135,11 +162,11 @@ public class WeedSpawnerGameTests {
 		});
 	}
 
-	@GameTest(maxTicks = 100)
+	@GameTest(maxTicks = 750)
 	public void tamingManagedWeedDespawnsImmediatelyButNaturalWeedsRemainTamable(GameTestHelper helper) {
 		BlockPos pos = placeSpawner(helper);
 		ServerLevel level = helper.getLevel();
-		helper.runAtTickTime(40, () -> {
+		helper.runAtTickTime(640, () -> {
 			List<Weed> weeds = owned(level, pos);
 			helper.assertTrue(weeds.size() == 3, "Expected three initial weeds");
 			Weed weed = weeds.getFirst();
@@ -159,14 +186,14 @@ public class WeedSpawnerGameTests {
 		});
 	}
 
-	@GameTest(maxTicks = 100)
+	@GameTest(maxTicks = 750)
 	public void directTameFlagCannotBypassTheRestriction(GameTestHelper helper) {
 		BlockPos pos = placeSpawner(helper);
 		ServerLevel level = helper.getLevel();
-		helper.runAtTickTime(40, () -> {
+		helper.runAtTickTime(640, () -> {
 			Weed weed = owned(level, pos).getFirst();
 			weed.setTame(true, true);
-			helper.runAtTickTime(45, () -> {
+			helper.runAtTickTime(645, () -> {
 				helper.assertTrue(!weed.isAlive(), "Directly setting the tame flag must not bypass the restriction");
 				helper.assertTrue(owned(level, pos).size() == 2, "The other weeds must remain and the tamed slot must wait for cooldown");
 				helper.succeed();

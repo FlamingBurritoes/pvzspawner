@@ -3,6 +3,7 @@ package net.amemah.pvzspawners;
 import net.fabricmc.api.ModInitializer;
 import net.amemah.pvzspawners.block.ModBlocks;
 import net.amemah.pvzspawners.spawner.WeedSpawnerManager;
+import net.amemah.pvzspawners.menu.SpawnerMenus;
 
 import net.minecraft.resources.Identifier;
 
@@ -20,6 +21,7 @@ public class Pvzpawners implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		ModBlocks.initialize();
+		SpawnerMenus.initialize();
 		WeedSpawnerManager.initialize();
 		LOGGER.info("Initialized Weed Spawner");
 	}
