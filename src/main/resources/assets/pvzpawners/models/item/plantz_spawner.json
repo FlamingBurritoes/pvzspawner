@@ -1,0 +1,5 @@
+{
+	"parent": "pvzpawners:block/plantz_spawner",
+	"gui_light": "front",
+	"display": { "gui": { "rotation": [90, 0, 0], "translation": [0, 0, 0], "scale": [1, 1, 1] } }
+}
