@@ -2,7 +2,8 @@
 
 ## Player-facing placement and Renewable Plant Pot
 
-- All three spawners now have `facing=north/east/south/west`, placed opposite the player's horizontal look direction so their front faces the player. `WeedSpawnerBlock` handles placement/rotation/mirroring and all three blockstates rotate the existing models. State-only changes retain the existing source, ownership, packet inventory and timer. Existing blocks without a saved facing use the north default.
+- All three spawners have `facing=north/east/south/west`, placed in the player's horizontal look direction so their front faces away from the player. `WeedSpawnerBlock` handles placement/rotation/mirroring and all three blockstates rotate the existing models. State-only changes retain the existing source, ownership, packet inventory and timer. Existing blocks keep their saved facing; new placement uses the updated rule. The renewable pot retains its normal toward-player placement.
+- The user's re-exported spawner models are now 16 units high. Shared Java collision and selection are full cubes (`0,0,0` to `16,16,16`) for all three spawners, including already-placed blocks. Model geometry/UV edits are retained; bare exported texture identifiers were repaired to `minecraft:block/...` and `pvzpawners:block/...`. Pot geometry, shapes, icons, mining and spawning timers are unchanged. Facing regression coverage checks away-player placement and full-cube selection/collision in all four directions, while retaining pot-facing and inventory/timer checks.
 - New block/item ID: `pvzpawners:renewable_plant_pot`, also in Functional Blocks. Recipe: a normal `plantz:plant_pot` centered in eight `plantz:sun_bottle` items. Breaking drops the pot without a remembered plant.
 - Starts with no reference. Players plant through the dependency's actual seed-packet path, preserving its placement, Sun, packet consumption and occupancy checks. `SeedPacketFilter.resolveStationary` accepts canonical packets whose type is a `Plant` with `canWalk() == false`; the actual entity is checked again immediately before addition. Walking/ordinary fake packets cannot establish a reference or consume a packet on rejection.
 - Successfully planting records the entity type, live UUID and planter UUID after the dependency's automatic `tame(player)` assignment, preserving normal planter ownership and shovel permissions. Renewable-pot plants allow normal taming and Sun healing; neither kills them nor starts a renewal timer. The three spawner kinds retain their separate anti-taming rules.
@@ -56,7 +57,7 @@ Paths relative to `src/main/java/net/amemah/pvzspawners/`:
 
 | File | Purpose |
 | --- | --- |
-| `block/PlantzSpawnerBlock.java` | Existing slab/mining behavior plus block entity and right-click menu opening. |
+| `block/PlantzSpawnerBlock.java` | Shared full-block shape/mining behavior plus block entity and right-click menu opening. |
 | `menu/SpawnerMenus.java` | Registers the menu and persistent block-entity types. |
 | `menu/PlantzSpawnerBlockEntity.java` | Stores/saves the packet, validates insertion, handles selection changes, drops contents on destruction. |
 | `menu/PlantzSpawnerMenu.java` | Server-synchronized one-slot menu, inventory slots, one-item limit and shift-click rules. |
@@ -91,7 +92,7 @@ This is the project-specific inventory for `pvzpawners`. The Java package is `ne
 
 - ID: `pvzpawners:dandelion_weed_spawner`; entity: `pea_extension:dandelion_weed`; seed packet: `pea_extension:dandelion_weed_packet`.
 - Defaults: two living entities, 20-second replacement cooldown, 3-block spawn radius, 6-block roam radius. Independent settings use `config/pvzpawners-dandelion.json`, with the same validated field names as the regular config (`maxWeeds` is the entity cap for that file).
-- Shares dirt-like mining, half-slab collision, smoke/spawn effect, normal death when its source is destroyed, anti-taming death/cooldown, unloaded-entity ownership and pending-death persistence. No normal Weed variant accessor is applied to Dandelion Weeds.
+- Shares dirt-like mining, full-block collision, smoke/spawn effect, normal death when its source is destroyed, anti-taming death/cooldown, unloaded-entity ownership and pending-death persistence. No normal Weed variant accessor is applied to Dandelion Weeds.
 - `spawner/SpawnerKind.java` contains per-source entity/settings differences. The existing block class, manager and SavedData now share behavior for both kinds instead of maintaining divergent copies. SavedData writes the source kind; old records without it remain regular Weed sources. Existing regular config is not replaced or migrated.
 - Registered both block/item pairs in `block/ModBlocks.java`; both appear in Functional Blocks. The shovel tag and English translations include the new block.
 - Added `assets/pvzpawners/blockstates/dandelion_weed_spawner.json`, `assets/pvzpawners/models/item/dandelion_weed_spawner.json`, `assets/pvzpawners/items/dandelion_weed_spawner.json`, `data/pvzpawners/recipe/dandelion_weed_spawner.json` and `data/pvzpawners/loot_table/blocks/dandelion_weed_spawner.json` under `src/main/resources/`.
@@ -109,7 +110,7 @@ Paths below are relative to `src/main/java/net/amemah/pvzspawners/`.
 | File | What it does |
 | --- | --- |
 | `block/ModBlocks.java` | Registers the Weed Spawner block and its inventory item, copies dirt's mining properties, and adds it to the Functional Blocks creative tab. |
-| `block/WeedSpawnerBlock.java` | Provides the half-slab collision/selection box and registers/removes the source when placed/destroyed. Removal kills its linked weeds. The visual model is configured independently. |
+| `block/WeedSpawnerBlock.java` | Provides full-block collision/selection, away-player facing and source placement/removal. Removal kills its linked weeds. The visual model is configured independently. |
 | `config/WeedSpawnerConfig.java` | Creates/reads the server-authoritative JSON configuration, validates limits, and falls back to defaults without overwriting invalid files. |
 | `spawner/SpawnSlot.java` | Tracks one owned entity UUID or a respawn deadline; a living/unloaded entity cannot be replaced. |
 | `spawner/SpawnerRange.java` | Implements circular horizontal distance checks rather than square bounding-box checks. |
@@ -128,7 +129,7 @@ Paths below are relative to `src/main/resources/`.
 | File | What it does |
 | --- | --- |
 | `assets/pvzpawners/blockstates/weed_spawner.json` | Connects the placed block to its model. |
-| `assets/pvzpawners/models/block/weed_spawner.json` | User-supplied slab-like Blockbench model, preserved during gameplay changes. |
+| `assets/pvzpawners/models/block/weed_spawner.json` | User-supplied full-height Blockbench model; geometry/UVs preserved, texture identifiers repaired. |
 | `assets/pvzpawners/textures/block/weed_spawner_top.png` | User-supplied top texture, preserved during gameplay changes. |
 | `assets/pvzpawners/models/item/weed_spawner.json` | Reuses the block model, with a GUI-only 90-degree rotation to show the top face in inventory/Creative slots. Held and placed appearances are unchanged. |
 | `assets/pvzpawners/items/weed_spawner.json` | Modern inventory-item model definition. |

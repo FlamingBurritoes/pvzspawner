@@ -64,9 +64,15 @@ public class RenewablePotGameTests {
 				var context = new BlockPlaceContext(player, InteractionHand.MAIN_HAND, new ItemStack(block),
 					new BlockHitResult(Vec3.atCenterOf(pos.below()), Direction.UP, pos.below(), false));
 				var state = block.getStateForPlacement(context);
-				helper.assertTrue(state.getValue(WeedSpawnerBlock.FACING) == direction.getOpposite(), "Placement must face the player for " + block);
-				helper.assertTrue(state.rotate(Rotation.CLOCKWISE_90).getValue(WeedSpawnerBlock.FACING) == direction.getOpposite().getClockWise(), "Rotation must update facing");
+				Direction expected = block == ModBlocks.RENEWABLE_PLANT_POT ? direction.getOpposite() : direction;
+				helper.assertTrue(state.getValue(WeedSpawnerBlock.FACING) == expected, "Spawners must face away from the player; the pot must retain its normal facing");
+				helper.assertTrue(state.rotate(Rotation.CLOCKWISE_90).getValue(WeedSpawnerBlock.FACING) == expected.getClockWise(), "Rotation must update facing");
 				helper.assertTrue(state.mirror(Mirror.FRONT_BACK).mirror(Mirror.FRONT_BACK).equals(state), "Mirroring twice must restore facing");
+				if (block != ModBlocks.RENEWABLE_PLANT_POT) {
+					var cube = new net.minecraft.world.phys.AABB(0, 0, 0, 1, 1, 1);
+					helper.assertTrue(state.getShape(level, pos).bounds().equals(cube), "Spawner selection must fill the full block");
+					helper.assertTrue(state.getCollisionShape(level, pos).bounds().equals(cube), "Spawner collision must fill the full block");
+				}
 			}
 			if (block == ModBlocks.RENEWABLE_PLANT_POT) continue;
 			level.setBlockAndUpdate(pos, block.defaultBlockState());

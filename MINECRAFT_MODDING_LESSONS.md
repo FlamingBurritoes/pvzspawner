@@ -38,6 +38,7 @@ This is a portable learning document for future Minecraft projects, not a specif
 ## Resources and configuration
 
 - A block model, outline/selection shape, collision shape and light-occlusion shape are different things. A full-size visual does not require full-block collision.
+- When a user deliberately changes a model from half to full height and wants matching physics, update the shared Java selection/collision shapes too and test every block using that class. Preserve their re-exported geometry/UVs while checking for texture identifiers reverted to bare filenames by the exporter.
 - Top-down block-item icons may look too dark under normal side/block lighting. Set `gui_light` to `front` on the item model instead of modifying PNG brightness or world lighting; verify the final appearance in a client.
 - Matching a vanilla block's mining behavior needs more than hardness. Copy appropriate block properties, set the correct mining-tool tag, and verify hand drops and tool speed. Copying dirt's properties does not automatically copy its shovel tag.
 - Modern inventory items may require an `assets/<namespace>/items/` definition in addition to a model. Match the exact version's resource layout.

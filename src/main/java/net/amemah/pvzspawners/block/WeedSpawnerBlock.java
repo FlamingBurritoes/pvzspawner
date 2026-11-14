@@ -22,7 +22,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 public class WeedSpawnerBlock extends Block {
 	public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
 	public static final MapCodec<WeedSpawnerBlock> CODEC = simpleCodec(WeedSpawnerBlock::new);
-	private static final VoxelShape SHAPE = Block.box(0, 0, 0, 16, 8, 16);
+	private static final VoxelShape SHAPE = Block.box(0, 0, 0, 16, 16, 16);
 
 	public WeedSpawnerBlock(Properties properties) {
 		super(properties);
@@ -36,7 +36,7 @@ public class WeedSpawnerBlock extends Block {
 
 	@Override
 	public BlockState getStateForPlacement(BlockPlaceContext context) {
-		return defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
+		return defaultBlockState().setValue(FACING, context.getHorizontalDirection());
 	}
 
 	@Override
